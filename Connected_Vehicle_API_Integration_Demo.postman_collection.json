@@ -1,0 +1,221 @@
+{
+  "info": {
+    "_postman_id": "2d7c4446-76b8-4c07-8b3d-5d49d1df1001",
+    "name": "Connected Vehicle API Integration Demo",
+    "description": "Sanitized demonstration collection showing hands-on API integration patterns for connected-vehicle / telematics workflows. All hosts, credentials, account IDs, device identifiers and payloads are synthetic.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.example-connectivity.com"
+    },
+    {
+      "key": "accountId",
+      "value": "demo-account-001"
+    },
+    {
+      "key": "subscriptionId",
+      "value": "demo-sub-001"
+    },
+    {
+      "key": "apiKey",
+      "value": "{{apiKey}}"
+    },
+    {
+      "key": "webhookUrl",
+      "value": "https://webhook.example.com"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Ping API",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/v1/ping",
+            "description": "Validate API reachability before deeper integration testing."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is successful', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});",
+                  "pm.test('Response time under 2 seconds', function () {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "List Accounts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/v1/accounts",
+            "description": "Retrieve accounts available to the authenticated integration."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('JSON response', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "item": [
+        {
+          "name": "List Subscriptions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/v1/accounts/{{accountId}}/subscriptions?page-index=0&max-page-item=10",
+            "description": "Inspect connected subscriptions/devices for an account using pagination."
+          }
+        },
+        {
+          "name": "Get Subscription",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/v1/accounts/{{accountId}}/subscriptions/{{subscriptionId}}",
+            "description": "Retrieve one subscription/device record for troubleshooting and validation."
+          }
+        },
+        {
+          "name": "Activate Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subscription-id\": \"{{subscriptionId}}\",\n  \"profile\": \"standard\",\n  \"requested-by\": \"demo-user\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/v1/accounts/{{accountId}}/subscriptions/{{subscriptionId}}/activate",
+            "description": "Synthetic activation request showing POST body validation and operational workflow."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhook Simulation",
+      "item": [
+        {
+          "name": "Send Connectivity Event",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_type\": \"subscription.status.changed\",\n  \"account_id\": \"{{accountId}}\",\n  \"subscription_id\": \"{{subscriptionId}}\",\n  \"status\": \"ACTIVE\",\n  \"occurred_at\": \"2026-09-30T12:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{webhookUrl}}/events/connectivity",
+            "description": "Synthetic webhook payload for testing event-driven integrations."
+          }
+        }
+      ]
+    }
+  ]
+}
